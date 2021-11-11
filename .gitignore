@@ -1,3 +1,4 @@
 /json/*
 /maya/*
 /node_modules/*
+/stats-logger.json
