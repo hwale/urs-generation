@@ -1,5 +1,11 @@
 const fs = require('fs');
 const { rando } = require('@nastyox/rando.js');
+const { randomBytes } = require('crypto');
+
+const animationOptions = [
+    { id: "AniM01", rarity: 80},
+    { id: "AniM02", rarity: 20}
+]
 
 const skinOptions = [
     { id: "Chr01", rarity: 35},
@@ -71,23 +77,24 @@ const bottomOptions = [
 ]
 
 const bgOptions = [
-    { id: "BG01", rarity: 40},
+    { id: "BG01", rarity: 70},
     { id: "BG02", rarity: 60},
-    { id: "BG03", rarity: 100},
-    { id: "BG04", rarity: 1},
+    { id: "BG03", rarity: 150},
+    { id: "BG04", rarity: 10},
     { id: "BG05", rarity: 70},
-    { id: "BG06", rarity: 20},
-    { id: "BG07", rarity: 120},
+    { id: "BG06", rarity: 15},
+    { id: "BG07", rarity: 130},
     { id: "BG08", rarity: 45},
-    { id: "BG09", rarity: 115},
-    { id: "BG10", rarity: 125},
-    { id: "BG11", rarity: 74},
+    { id: "BG09", rarity: 50},
+    { id: "BG10", rarity: 110},
+    { id: "BG11", rarity: 50},
     { id: "BG12", rarity: 80},
-    { id: "BG13", rarity: 5},
-    { id: "BG14", rarity: 35},
-    { id: "BG15", rarity: 110}
+    { id: "BG13", rarity: 10},
+    { id: "BG14", rarity: 50},
+    { id: "BG15", rarity: 100}
 ]
 
+const animationPool = [];
 const skinPool = [];
 const eyesPool = [];
 const armsPool = [];
@@ -102,6 +109,7 @@ const replicator = (pool) => (prop) => {
     }
 }
 
+animationOptions.forEach(replicator(animationPool));
 skinOptions.forEach(replicator(skinPool));
 eyesOptions.forEach(replicator(eyesPool));
 armsOptions.forEach(replicator(armsPool));
@@ -113,6 +121,10 @@ bgOptions.forEach(replicator(bgPool));
 const generator = (number) => {
     const logger = {
         created: 0,
+        animation: {
+            AniM01: 0,
+            AniM02: 0
+        },
         skin: {
             Chr01: 0,
             Chr02: 0,
@@ -197,6 +209,7 @@ const generator = (number) => {
     }
 
     for (let i = 0; i < number; i++) {
+        const { value: chosenAnimation } = rando(animationPool);
         const { value: chosenSkin } = rando(skinPool);
         const { value: chosenEyes } = rando(eyesPool);
         const { value: chosenArms } = rando(armsPool);
@@ -209,6 +222,7 @@ const generator = (number) => {
 
         const companionJson = {
             id: companionId,
+            animation: chosenAnimation.id,
             skin: chosenSkin.id,
             eyes: chosenEyes.id,
             arms: chosenArms.id,
@@ -218,7 +232,7 @@ const generator = (number) => {
             bg: chosenBg.id
         };
 
-        fs.readFile("./Chr01_E01_A01_L01_H01_B01_Bg01.ma", "utf8", (err, data) => {
+        fs.readFile("./AniM01_Chr01_E01_A01_L01_H01_B01_Bg01.ma", "utf8", (err, data) => {
             if (err) {
                 console.log(error);
                 return;
@@ -226,17 +240,19 @@ const generator = (number) => {
 
             let maya = data;
 
-            maya = maya.replace(/Ch01/g, chosenSkin.id)
+            maya = maya.replace(/Chr01/g, chosenSkin.id)
+                .replace(/AniM01/g, chosenAnimation.id)
                 .replace(/E01/g, chosenEyes.id)
                 .replace(/A01/g, chosenArms.id)
                 .replace(/L01/g, chosenLiquid.id)
                 .replace(/H01/g, chosenHead.id)
                 .replace(/B01/g, chosenBottom.id)
-                .replace(/BG01/g, chosenBg.id);
+                .replace(/BG01/g, chosenBg.id)
+                .replace(/Bg01/g, chosenBg.id);
 
-            fs.writeFile(`./maya/${companionId}_${chosenSkin.id}_${chosenEyes.id}_${chosenArms.id}_${chosenLiquid.id}_${chosenHead.id}_${chosenBottom.id}_${chosenBg.id}.ma`, maya, "utf8", err => {
+            fs.writeFile(`./maya/${companionId}_${chosenAnimation.id}_${chosenSkin.id}_${chosenEyes.id}_${chosenArms.id}_${chosenLiquid.id}_${chosenHead.id}_${chosenBottom.id}_${chosenBg.id}.ma`, maya, "utf8", err => {
                 if (err) console.log("err", err)
-                console.log("Successfully created " + `./maya/${companionId}_${chosenSkin.id}_${chosenEyes.id}_${chosenArms.id}_${chosenLiquid.id}_${chosenHead.id}_${chosenBottom.id}_${chosenBg.id}.ma`)
+                console.log("Successfully created " + `./maya/${companionId}_${chosenAnimation.id}_${chosenSkin.id}_${chosenEyes.id}_${chosenArms.id}_${chosenLiquid.id}_${chosenHead.id}_${chosenBottom.id}_${chosenBg.id}.ma`)
             })
         })
 
@@ -246,6 +262,7 @@ const generator = (number) => {
         // })
 
         logger.created++;
+        logger.animation[chosenAnimation.id]++;
         logger.skin[chosenSkin.id]++;
         logger.eyes[chosenEyes.id]++;
         logger.arms[chosenArms.id]++;
@@ -263,4 +280,4 @@ const generator = (number) => {
 
 }
 
-generator(10);
+generator(process.argv[2]);
